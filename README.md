@@ -18,6 +18,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 4443
 
 The server starts at `http://127.0.0.1:4443`.
 Using port `4443` does not enable HTTPS by itself. This app still serves plain HTTP unless you add TLS separately.
+Uploaded files are stored in the local `files/` directory, which the app creates automatically on startup.
 
 For a long-running deployment, use Uvicorn without `--reload`, or run it as a `systemd` service.
 
@@ -26,7 +27,9 @@ For a long-running deployment, use Uvicorn without `--reload`, or run it as a `s
 - `GET /` basic API info
 - `GET /files` list uploaded files
 - `POST /upload` upload a file
-- `GET /files/{filename}` download a file
+- `GET /download/{filename}` download a file
+- `GET /download?file={filename}` download a file
+- `GET /files/{filename}` legacy download alias
 
 ## Examples
 
@@ -45,7 +48,13 @@ curl -F "file=@./example.txt" "http://127.0.0.1:4443/upload?overwrite=true"
 Download:
 
 ```bash
-curl -O http://127.0.0.1:4443/files/example.txt
+curl -O http://127.0.0.1:4443/download/example.txt
+```
+
+Download with query string:
+
+```bash
+curl -O "http://127.0.0.1:4443/download?file=example.txt"
 ```
 
 ## Run As A systemd Service

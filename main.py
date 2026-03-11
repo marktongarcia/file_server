@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 
 
 BASE_DIR = Path(__file__).resolve().parent
-STORAGE_DIR = BASE_DIR / "storage"
-STORAGE_DIR.mkdir(exist_ok=True)
+FILES_DIR = BASE_DIR / "files"
+FILES_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(title="FastAPI File Server")
 
@@ -22,12 +22,12 @@ def normalize_filename(filename: str) -> str:
     return cleaned
 
 
-def get_storage_path(filename: str) -> Path:
+def get_file_path(filename: str) -> Path:
     safe_name = normalize_filename(filename)
-    storage_root = STORAGE_DIR.resolve()
-    file_path = (storage_root / safe_name).resolve()
+    files_root = FILES_DIR.resolve()
+    file_path = (files_root / safe_name).resolve()
 
-    if file_path.parent != storage_root:
+    if file_path.parent != files_root:
         raise HTTPException(status_code=400, detail="Invalid filename.")
 
     return file_path
@@ -38,7 +38,8 @@ async def root() -> dict[str, object]:
     return {
         "message": "FastAPI file server",
         "upload_endpoint": "/upload",
-        "download_endpoint": "/files/{filename}",
+        "download_endpoint": "/download/{filename}",
+        "download_query_endpoint": "/download?file={filename}",
         "list_endpoint": "/files",
     }
 
@@ -47,7 +48,7 @@ async def root() -> dict[str, object]:
 async def list_files() -> dict[str, list[dict[str, int | str]]]:
     files = []
 
-    for file_path in sorted(STORAGE_DIR.iterdir()):
+    for file_path in sorted(FILES_DIR.iterdir()):
         if file_path.is_file():
             files.append(
                 {
@@ -59,10 +60,19 @@ async def list_files() -> dict[str, list[dict[str, int | str]]]:
     return {"files": files}
 
 
+def build_download_response(filename: str) -> FileResponse:
+    file_path = get_file_path(filename)
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="File not found.")
+
+    return FileResponse(path=file_path, filename=file_path.name)
+
+
 @app.post("/upload", status_code=201)
 async def upload_file(file: UploadFile = File(...), overwrite: bool = False) -> dict[str, object]:
     filename = normalize_filename(file.filename or "")
-    destination = get_storage_path(filename)
+    destination = get_file_path(filename)
 
     if destination.exists() and not overwrite:
         raise HTTPException(
@@ -80,15 +90,21 @@ async def upload_file(file: UploadFile = File(...), overwrite: bool = False) -> 
     return {
         "filename": filename,
         "size": destination.stat().st_size,
-        "download_url": f"/files/{filename}",
+        "download_url": f"/download/{filename}",
+        "download_url_query": f"/download?file={filename}",
     }
 
 
-@app.get("/files/{filename}")
+@app.get("/download/{filename}")
 async def download_file(filename: str) -> FileResponse:
-    file_path = get_storage_path(filename)
+    return build_download_response(filename)
 
-    if not file_path.is_file():
-        raise HTTPException(status_code=404, detail="File not found.")
 
-    return FileResponse(path=file_path, filename=file_path.name)
+@app.get("/download")
+async def download_file_by_query(filename: str = Query(..., alias="file")) -> FileResponse:
+    return build_download_response(filename)
+
+
+@app.get("/files/{filename}")
+async def download_file_legacy(filename: str) -> FileResponse:
+    return build_download_response(filename)
