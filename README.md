@@ -42,7 +42,7 @@ Inside the container, uploaded files are stored in `/data` by default.
 
 The included [`compose.yaml`](compose.yaml) bind-mounts the repo's local `./files` directory to `/data`, so Docker and the local `systemd` service can share the same upload storage. It also includes the local build context, so it must be run from this repository directory.
 
-At container startup, the image detects the owner of the mounted `./files` directory and drops to that UID/GID automatically when possible, so you do not need to pass `UID` and `GID` on the command line.
+Compose reads `UID` and `GID` from the tracked [`.env`](/home/mark/pycharm_projects/file_server/.env) file. This repo currently sets both to `1000`, which matches this host. If you deploy on a host with different numeric IDs, update `.env` to match the owner of `./files`.
 
 On SELinux systems, the Compose file uses `:Z` on the bind mount so `./files` is relabeled for container access.
 
@@ -55,6 +55,7 @@ docker run -d \
   --restart unless-stopped \
   -p 4443:4443 \
   -v "$(pwd)/files:/data:Z" \
+  --user "$(id -u):$(id -g)" \
   file-server:latest
 ```
 
