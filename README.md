@@ -39,7 +39,13 @@ docker compose up -d --build
 
 Inside the container, uploaded files are stored in `/data` by default.
 
-The included [`compose.yaml`](compose.yaml) maps `/srv/file-server-data` on the host to `/data` in the container and includes the local build context, so it must be run from this repository directory.
+The included [`compose.yaml`](compose.yaml) uses a named Docker volume for `/data`, so it works on a fresh machine without creating a host directory first. It also includes the local build context, so it must be run from this repository directory.
+
+If you want a host bind mount instead, create the directory first and then change the volume mapping in `compose.yaml`:
+
+```bash
+sudo mkdir -p /srv/file-server-data
+```
 
 If you prefer a one-off container command instead:
 
@@ -50,6 +56,12 @@ docker run -d \
   -p 4443:4443 \
   -v /srv/file-server-data:/data \
   file-server:latest
+```
+
+For `docker run`, the host path must already exist:
+
+```bash
+sudo mkdir -p /srv/file-server-data
 ```
 
 Move the built image to another server:

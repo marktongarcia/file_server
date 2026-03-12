@@ -11,4 +11,7 @@ services:
     ports:
       - "4443:4443"
     volumes:
-      - /srv/file-server-data:/data
+      - file-server-data:/data
+
+volumes:
+  file-server-data:
