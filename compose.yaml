@@ -12,4 +12,4 @@ services:
     ports:
       - "4443:4443"
     volumes:
-      - ./files:/data
+      - ./files:/data:Z

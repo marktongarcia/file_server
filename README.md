@@ -47,6 +47,8 @@ The container runs as `${UID:-1000}:${GID:-1000}` so uploaded files stay owned b
 UID=$(id -u) GID=$(id -g) docker compose up -d --build
 ```
 
+On SELinux systems, the Compose file uses `:Z` on the bind mount so `./files` is relabeled for container access.
+
 If you prefer a one-off container command instead:
 
 ```bash
@@ -54,7 +56,7 @@ docker run -d \
   --name file-server \
   --restart unless-stopped \
   -p 4443:4443 \
-  -v "$(pwd)/files:/data" \
+  -v "$(pwd)/files:/data:Z" \
   --user "$(id -u):$(id -g)" \
   file-server:latest
 ```
