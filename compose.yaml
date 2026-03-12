@@ -6,12 +6,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    user: "${UID:-1000}:${GID:-1000}"
     container_name: file-server
     restart: unless-stopped
     ports:
       - "4443:4443"
     volumes:
-      - file-server-data:/data
-
-volumes:
-  file-server-data:
+      - ./files:/data

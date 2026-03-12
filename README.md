@@ -39,12 +39,12 @@ docker compose up -d --build
 
 Inside the container, uploaded files are stored in `/data` by default.
 
-The included [`compose.yaml`](compose.yaml) uses a named Docker volume for `/data`, so it works on a fresh machine without creating a host directory first. It also includes the local build context, so it must be run from this repository directory.
+The included [`compose.yaml`](compose.yaml) bind-mounts the repo's local `./files` directory to `/data`, so Docker and the local `systemd` service can share the same upload storage. It also includes the local build context, so it must be run from this repository directory.
 
-If you want a host bind mount instead, create the directory first and then change the volume mapping in `compose.yaml`:
+The container runs as `${UID:-1000}:${GID:-1000}` so uploaded files stay owned by the host user/group instead of root. If your user is not `1000:1000`, start Compose with your actual IDs:
 
 ```bash
-sudo mkdir -p /srv/file-server-data
+UID=$(id -u) GID=$(id -g) docker compose up -d --build
 ```
 
 If you prefer a one-off container command instead:
@@ -54,14 +54,9 @@ docker run -d \
   --name file-server \
   --restart unless-stopped \
   -p 4443:4443 \
-  -v /srv/file-server-data:/data \
+  -v "$(pwd)/files:/data" \
+  --user "$(id -u):$(id -g)" \
   file-server:latest
-```
-
-For `docker run`, the host path must already exist:
-
-```bash
-sudo mkdir -p /srv/file-server-data
 ```
 
 Move the built image to another server:
