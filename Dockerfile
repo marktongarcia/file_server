@@ -16,11 +16,11 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py ./
+COPY docker-entrypoint.py /usr/local/bin/docker-entrypoint.py
 
 RUN mkdir -p /data \
-    && chown -R app:app /app /data
-
-USER app
+    && chown -R app:app /app /data \
+    && chmod 755 /usr/local/bin/docker-entrypoint.py
 
 EXPOSE 4443
 
@@ -29,4 +29,4 @@ VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import os, urllib.request; port = os.environ.get('PORT', '4443'); urllib.request.urlopen(f'http://127.0.0.1:{port}/healthz', timeout=3)"
 
-CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-4443}"]
+ENTRYPOINT ["python", "/usr/local/bin/docker-entrypoint.py"]

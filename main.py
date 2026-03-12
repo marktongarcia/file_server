@@ -88,9 +88,15 @@ async def upload_file(file: UploadFile = File(...), overwrite: bool = False) -> 
         )
 
     try:
-        with destination.open("wb") as output_file:
-            while chunk := await file.read(1024 * 1024):
-                output_file.write(chunk)
+        try:
+            with destination.open("wb") as output_file:
+                while chunk := await file.read(1024 * 1024):
+                    output_file.write(chunk)
+        except PermissionError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Upload directory is not writable: {FILES_DIR}",
+            ) from exc
     finally:
         await file.close()
 

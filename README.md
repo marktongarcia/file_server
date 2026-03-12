@@ -34,6 +34,7 @@ docker build -t file-server:latest .
 Preferred deployment with Docker Compose:
 
 ```bash
+mkdir -p files
 docker compose up -d --build
 ```
 
@@ -41,23 +42,19 @@ Inside the container, uploaded files are stored in `/data` by default.
 
 The included [`compose.yaml`](compose.yaml) bind-mounts the repo's local `./files` directory to `/data`, so Docker and the local `systemd` service can share the same upload storage. It also includes the local build context, so it must be run from this repository directory.
 
-The container runs as `${UID:-1000}:${GID:-1000}` so uploaded files stay owned by the host user/group instead of root. If your user is not `1000:1000`, start Compose with your actual IDs:
-
-```bash
-UID=$(id -u) GID=$(id -g) docker compose up -d --build
-```
+At container startup, the image detects the owner of the mounted `./files` directory and drops to that UID/GID automatically when possible, so you do not need to pass `UID` and `GID` on the command line.
 
 On SELinux systems, the Compose file uses `:Z` on the bind mount so `./files` is relabeled for container access.
 
 If you prefer a one-off container command instead:
 
 ```bash
+mkdir -p files
 docker run -d \
   --name file-server \
   --restart unless-stopped \
   -p 4443:4443 \
   -v "$(pwd)/files:/data:Z" \
-  --user "$(id -u):$(id -g)" \
   file-server:latest
 ```
 
