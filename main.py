@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
@@ -5,8 +6,8 @@ from fastapi.responses import FileResponse
 
 
 BASE_DIR = Path(__file__).resolve().parent
-FILES_DIR = BASE_DIR / "files"
-FILES_DIR.mkdir(exist_ok=True)
+FILES_DIR = Path(os.environ.get("FILES_DIR", BASE_DIR / "files")).expanduser().resolve()
+FILES_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI(title="FastAPI File Server")
 
@@ -41,7 +42,13 @@ async def root() -> dict[str, object]:
         "download_endpoint": "/download/{filename}",
         "download_query_endpoint": "/download?file={filename}",
         "list_endpoint": "/files",
+        "health_endpoint": "/healthz",
     }
+
+
+@app.get("/healthz")
+async def healthcheck() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.get("/files")

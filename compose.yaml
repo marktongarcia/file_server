@@ -1,0 +1,11 @@
+name: file-server
+
+services:
+  app:
+    image: file-server:latest
+    container_name: file-server
+    restart: unless-stopped
+    ports:
+      - "4443:4443"
+    volumes:
+      - /srv/file-server-data:/data
