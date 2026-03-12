@@ -25,7 +25,7 @@ For a long-running deployment, use Uvicorn without `--reload`, or run it as a `s
 
 ## Docker
 
-Build the image:
+Build the image from the project root:
 
 ```bash
 docker build -t file-server:latest .
@@ -34,12 +34,12 @@ docker build -t file-server:latest .
 Preferred deployment with Docker Compose:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 Inside the container, uploaded files are stored in `/data` by default.
 
-The included [`compose.yaml`](compose.yaml) maps `/srv/file-server-data` on the host to `/data` in the container.
+The included [`compose.yaml`](compose.yaml) maps `/srv/file-server-data` on the host to `/data` in the container and includes the local build context, so it must be run from this repository directory.
 
 If you prefer a one-off container command instead:
 

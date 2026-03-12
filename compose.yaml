@@ -3,6 +3,9 @@ name: file-server
 services:
   app:
     image: file-server:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: file-server
     restart: unless-stopped
     ports:
